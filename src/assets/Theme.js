@@ -3,6 +3,7 @@ import { createTheme } from "@mui/material/styles";
 const Colors = {
   primary: "#165643",
   secondary: "#AFDECC",
+  lightcyan:"#E6F1F2",
   mintcream: "#F4FAFB",
   gray: "#B6B6B6",
   mintastic: "#AFFFE0",
@@ -20,6 +21,9 @@ const theme = createTheme({
     },
     secondary: {
       main: Colors.secondary,
+    },
+    lightcyan:{
+      main: Colors.lightcyan,
     },
     mintcream: {
       main: Colors.mintcream,

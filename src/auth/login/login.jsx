@@ -2,16 +2,37 @@ import { Grid } from "@mui/material";
 import { Box, margin } from "@mui/system";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import login from "../../../assets/images/login.png";
-import theme from "../../../assets/Theme";
-import MDButton from "../../../components/MDButton";
-import MDCheckbox from "../../../components/MDCheckbox";
-import MDHeading from "../../../components/MDHeading";
-import MDHeadingSub from "../../../components/MDHeadingSub";
-import MDTextField from "../../../components/MDTextField";
+import loginPic from "../../assets/images/login.png";
+import theme from "../../assets/Theme";
+import MDButton from "../../components/MDButton";
+import MDCheckbox from "../../components/MDCheckbox";
+import MDHeading from "../../components/MDHeading";
+import MDHeadingSub from "../../components/MDHeadingSub";
+import MDTextField from "../../components/MDTextField";
+import * as yup from 'yup';
+import { Formik, Form } from 'formik';
+import MDError from "../../components/MDError";
+import { useDispatch } from "react-redux";
+import { login } from "./authSlice";
 
 const Login = () => {
     const navigate=useNavigate()
+    const dispatch=useDispatch()
+
+    const initialValues = {
+        email: "",
+        password: "",
+    };
+
+
+    let Schema = yup.object().shape({
+        email: yup.string().email().required("Email reuqired"),
+        password: yup
+            .string()
+            .required("Password reuqired")
+            // .matches(/^(?=.*\d)(?=.*[a-z]).{6,}$/, "Must Contain 6 Characters, One Uppercase, One Lowercase and One Number"),
+    });
+
     return (
         <>
         <Box>
@@ -46,12 +67,30 @@ const Login = () => {
                         >
                             Medicdex
                         </MDHeadingSub>
+                           <Formik
+                            initialValues={initialValues}
+                            validationSchema={Schema}
+                            onSubmit={async (data) => {
+                                const body = { userName: data?.email?.toLowerCase(), password: data?.password };
+                                var Auth= await dispatch(login(body))
+                                 if (Auth?.type == "login/fulfilled") {
+                                   localStorage.setItem("auth","true")
+                                   navigate("/hospital-settings")
+                                }
+                            }}
+                        >
+                            {({ handleChange, touched, handleBlur, errors }) => (
+                                <Form>
                         <Box>
                             <MDHeading sx={{ color: `${theme.palette.mintastic.main}` }}>
                                 Login
                             </MDHeading>
-                            <MDTextField type="email" placeholder="Enter Email / hospital ID" sx={{mt:{xs:2,md:5}}}/>
-                            <MDTextField type="password" placeholder="Enter Password" sx={{mt:{xs:2,md:4}}}/>
+                            <MDTextField  name="email"   placeholder="Enter Email / hospital ID" sx={{mt:{xs:2,md:5}}} onChange={handleChange} onBlur={handleBlur} valid={errors.email} touch={touched.email}/>
+                            {errors.email && touched.email ? <MDError>{errors.email}</MDError> : null}
+
+                            <MDTextField  name="password" type="password" placeholder="Enter Password" sx={{mt:{xs:2,md:4}}} onChange={handleChange} onBlur={handleBlur}/>
+                            {errors.password && touched.password ? <MDError>{errors.password}</MDError> : null}
+
                             <Box
                                 sx={{
                                     display: "flex",
@@ -82,8 +121,9 @@ const Login = () => {
                                         }
                                     }}
                                     onClick={()=>{
-                                        navigate("/")
+                                        // navigate("/")
                                     }}
+                                    type="submit"
                                 >
                                     Login
                                 </MDButton>
@@ -91,6 +131,9 @@ const Login = () => {
                             </Box>
 
                         </Box>
+                        </Form>
+                            )}
+                        </Formik>
                         <MDHeadingSub sx={{ color: theme.palette.lightgreen.main, fontSize: { xs: "1rem", sm: "1.2rem", md: "2rem" } }}>
                             Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s
                         </MDHeadingSub>
@@ -98,9 +141,10 @@ const Login = () => {
                     </Box>
                 </Grid>
                 <Grid item xs={12} sm={12} md={6}>
-                    <img src={login} alt="login" style={{height:"100%",width:"100%",objectFit:"fill"}}/>
+                    <img src={loginPic} alt="login" style={{height:"100%",width:"100%",objectFit:"fill"}}/>
                 </Grid>
             </Grid>
+           
         </Box>
       
         </>

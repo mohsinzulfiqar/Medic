@@ -1,30 +1,76 @@
 import { Box, Divider, Grid, ToggleButtonGroup } from "@mui/material";
 import React from "react";
-import theme from "../assets/Theme";
-import MDBadge from "../components/MDBadge";
-import MDButton from "../components/MDButton";
-import MDContainer from "../components/MDContainer";
-import MDHeading from "../components/MDHeading";
-import MDHeadingSub from "../components/MDHeadingSub";
-import MDLabel from "../components/MDLabel";
-import MDLabelPrimary from "../components/MDLabelPrimary";
-import MDSearchField from "../components/MDSearchField";
-import MDTextField from "../components/MDTextField";
-import MDToggle from "../components/MDToggle";
+import theme from "../../assets/Theme";
+import MDBadge from "../../components/MDBadge";
+import MDButton from "../../components/MDButton";
+import MDContainer from "../../components/MDContainer";
+import MDHeading from "../../components/MDHeading";
+import MDHeadingSub from "../../components/MDHeadingSub";
+import MDLabel from "../../components/MDLabel";
+import MDLabelPrimary from "../../components/MDLabelPrimary";
+import MDSearchField from "../../components/MDSearchField";
+import MDTextField from "../../components/MDTextField";
+import MDToggle from "../../components/MDToggle";
 import AddIcon from '@mui/icons-material/Add';
-import DoctorCard from "../components/sharedcomponents/doctor-card";
-import InfoCard from "../components/sharedcomponents/info-card";
-import MDToggleButton from "../components/MDToggleButton";
-import MDTable from "../components/MDTable";
-import Navbar from "../layouts/Navbar";
-// import MyCustomTable from "./MyCustomTable";
+import DoctorCard from "../../components/sharedcomponents/doctor-card";
+import InfoCard from "../../components/sharedcomponents/info-card";
+import MDToggleButton from "../../components/MDToggleButton";
+import Navbar from "../../layouts/Navbar";
+import * as yup from 'yup';
+import { Formik, Form } from 'formik';
+import MDError from "../../components/MDError";
+import axios from "axios";
+import { CreateStaff, GetStaff } from "../hospitalsettingStap/hospitalApi/hospitalApiSlice";
+import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
+import MDTable from "../hospitalsettingStap/hospitalApi/MDTable";
+
+var rows = [];
+
+const CreateRows = (data) => {
+    return data?.map((row) => {
+      return {
+        id: row?.id,
+        staffName: row?.staffName,
+        fee: row?.fee,
+        phone: row?.phone,
+        specialization: row?.specialization,
+        staffType: row?.staffType,
+        timing: row?.timing,
+      };
+    });
+  };
 
 const MedicalStaff = () => {
-    const [alignment, setAlignment] = React.useState("web");
+    const [alignment, setAlignment] = React.useState("Doctor");
+    const dispatch=useDispatch()
+  const allStaffData = useSelector((state) => state.hospital);
 
-    const handleChange = (event, newAlignment) => {
+    const handleStaff = (event, newAlignment) => {
         setAlignment(newAlignment);
     };
+
+    const initialValues = {
+        staffName:"",
+        specialization:"",
+        fee:"",
+        phone:"",
+        timing:""
+    };
+
+    let Schema = yup.object().shape({
+        staffName: yup.string().required("Name reuqired"),
+        specialization: yup.string().required("reuqired"),
+        fee: yup.string().required("Fee reuqired"),
+        phone: yup.string().required("Phone reuqired"),
+        timing: yup.string().required("Timing reuqired"),
+    });
+  rows = CreateRows(allStaffData?.allStaff?.data?.staff);
+
+  React.useEffect(() => {
+    dispatch(GetStaff());
+  }, []);
+
     return (  <>
         <Navbar />
         <Box>
@@ -133,22 +179,39 @@ const MedicalStaff = () => {
                                 alignItems: "center",
                             }}
                         >
+                             <Formik
+                            initialValues={initialValues}
+                            validationSchema={Schema}
+                            onSubmit={async (data) => {
+                                data.staffType = alignment;
+                                await dispatch(CreateStaff(data))
+                                await dispatch(GetStaff())
+                            }}
+                        >
+                            {({ handleChange, touched, handleBlur, errors }) => (
+                                <Form>
                             <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} sm={6} md={4} lg={3} xl={2}>
-                                        <MDTextField placeholder="Name"/>
+                                        <MDTextField placeholder="Name" name="staffName" onChange={handleChange} onBlur={handleBlur} valid={errors.staffName} touch={touched.staffName}/>
+                            {errors.staffName && touched.staffName ? <MDError>{errors.staffName}</MDError> : null}
+
                                     </Grid>
                                     <Grid item xs={12} sm={6} md={4} lg={3} xl={2}>
-                                        <MDTextField placeholder="Specialization"/>
+                                        <MDTextField placeholder="Specialization" name="specialization" onChange={handleChange} onBlur={handleBlur} valid={errors.specialization} touch={touched.specialization}/>
+                            {errors.specialization && touched.specialization ? <MDError>{errors.specialization}</MDError> : null}
+
                                     </Grid>{" "}
                                     <Grid item xs={12} sm={6} md={4} lg={3} xl={1}>
-                                        <MDTextField placeholder="500"/>
+                                        <MDTextField placeholder="500" name="fee" onChange={handleChange} onBlur={handleBlur} valid={errors.fee} touch={touched.fee}/>
+                            {errors.fee && touched.fee ? <MDError>{errors.fee}</MDError> : null}
+
                                     </Grid>{" "}
                                     <Grid item xs={12} sm={6} md={4} lg={3} xl={2 }>
                                     <ToggleButtonGroup
                                             color="primary"
                                             value={alignment}
-                                            onChange={handleChange}
+                                            onChange={handleStaff}
                                             exclusive
                                             aria-label="Platform"
                                             sx={{
@@ -158,21 +221,29 @@ const MedicalStaff = () => {
                                                 width: "100%",
                                             }}
                                         >
-                                            <MDToggleButton value="web">Nurse</MDToggleButton>
-                                            <MDToggleButton value="android">Doctor</MDToggleButton>
+                                            <MDToggleButton value="Nurse">Nurse</MDToggleButton>
+                                                <MDToggleButton value="Doctor">Doctor</MDToggleButton>
                                         </ToggleButtonGroup>
                                     </Grid>
                                     <Grid item xs={12} sm={6} md={4} lg={3} xl={2}>
-                                        <MDTextField placeholder="Phone"/>
+                                        <MDTextField placeholder="Phone" name="phone" onChange={handleChange} onBlur={handleBlur} valid={errors.phone} touch={touched.phone}/>
+                            {errors.phone && touched.phone ? <MDError>{errors.phone}</MDError> : null}
+
                                     </Grid>{" "}
                                     <Grid item xs={12} sm={6} md={4} lg={3} xl={2}>
-                                        <MDTextField placeholder="Timing"/>
+                                        <MDTextField placeholder="Timing" name="timing" onChange={handleChange} onBlur={handleBlur} valid={errors.timing} touch={touched.timing}/>
+                            {errors.timing && touched.timing ? <MDError>{errors.timing}</MDError> : null}
+
                                     </Grid>{" "}
                                     <Grid item xs={12} sm={12} md={12} lg={3} xl={1}>
-                                    <MDButton sx={{width:{xs:"100%",lg:"80px!important"}}}><AddIcon sx={{fontSize:"28px",width:"80px!important"}}/></MDButton>
+                                    <MDButton sx={{width:{xs:"100%",lg:"80px!important"}}} type="submit"><AddIcon sx={{fontSize:"28px",width:"80px!important"}}/></MDButton>
                                     </Grid>
                                 </Grid>
                             </Grid>
+                            </Form>
+                            )}
+                        </Formik>
+
                         </Grid>
                     </MDContainer>
 
@@ -203,7 +274,7 @@ const MedicalStaff = () => {
                                 height: "1px",
                             }}
                         ></Divider>
-                        <MDTable/>
+                       {rows && <MDTable rows={rows}/>}
 
                         {/* <MyCustomTable/> */}
                     </MDContainer>
